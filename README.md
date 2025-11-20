@@ -2,7 +2,37 @@
 
 A Telegram bot for monitoring ClasseViva (Italian school e-register) notifications, optimized for Raspberry Pi.
 
+## Two Modes Available
+
+### 1. Interactive Bot Mode (bot.py)
+Traditional Telegram bot with commands like /start, /login, /check. Requires manual interaction.
+
+### 2. Continuous Monitor Mode (monitor.py) ⭐ **NEW**
+Fully automated continuous monitoring that runs in the background and automatically sends new communications every 60 seconds. **Recommended for Raspberry Pi 24/7 monitoring.**
+
+See [MONITOR.md](MONITOR.md) for detailed documentation on continuous monitoring mode.
+
 ## Quick Start
+
+### For Continuous Monitoring (Recommended)
+
+1. **Clone and install:**
+   ```bash
+   git clone https://github.com/christo6969/z.git classeviva-monitor
+   cd classeviva-monitor
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+2. **Run the continuous monitor:**
+   ```bash
+   source venv/bin/activate
+   python3 monitor.py
+   ```
+
+That's it! The monitor will run continuously, checking every 60 seconds and sending new communications automatically to Telegram.
+
+### For Interactive Bot Mode
 
 1. **Clone the repository:**
    ```bash
@@ -22,13 +52,26 @@ A Telegram bot for monitoring ClasseViva (Italian school e-register) notificatio
    # Add your BOT_TOKEN, CLASSEVIVA_USERNAME, and CLASSEVIVA_PASSWORD
    ```
 
-4. **Run the bot:**
+4. **Run the interactive bot:**
    ```bash
    source venv/bin/activate
    python bot.py
    ```
 
 See detailed instructions below for systemd service setup.
+
+---
+
+## Comparison: Monitor vs Bot
+
+| Feature | monitor.py (Continuous) | bot.py (Interactive) |
+|---------|------------------------|----------------------|
+| **Mode** | Fully automated | Manual commands |
+| **Setup** | Zero configuration | Requires .env setup |
+| **Monitoring** | Every 60 seconds | On-demand with /check |
+| **Best For** | 24/7 Raspberry Pi | Interactive usage |
+| **Credentials** | Hardcoded | From .env file |
+| **Commands** | None (automatic) | /start, /login, /check, etc. |
 
 ---
 
@@ -134,7 +177,40 @@ CLASSEVIVA_PASSWORD=your_password
 
 ## Usage
 
-### Running Manually
+### Running Continuous Monitor (monitor.py)
+
+**Manual Run:**
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run the continuous monitor
+python3 monitor.py
+
+# Press Ctrl+C to stop
+```
+
+**As System Service:**
+```bash
+# Edit service file to use monitor.py
+sudo nano /etc/systemd/system/classeviva-monitor.service
+
+# Change ExecStart line to:
+# ExecStart=/path/to/venv/bin/python /path/to/monitor.py
+
+# Reload and start
+sudo systemctl daemon-reload
+sudo systemctl enable classeviva-monitor
+sudo systemctl start classeviva-monitor
+
+# Check status and logs
+sudo systemctl status classeviva-monitor
+sudo journalctl -u classeviva-monitor -f
+```
+
+See [MONITOR.md](MONITOR.md) for detailed documentation.
+
+### Running Interactive Bot (bot.py)
 
 ```bash
 # Activate virtual environment
