@@ -18,3 +18,7 @@ pillow==10.3.0
 
 # TgCrypto for better performance
 TgCrypto==1.2.5
+
+# Console coloring and timezone support
+colorama==0.4.6
+pytz==2024.1

@@ -4,6 +4,7 @@ Telegram bot for monitoring ClasseViva notifications
 Optimized for Raspberry Pi
 
 Uses kurigram (pyrogram fork from kurimuzonakuma/pyrogram)
+With colored console logging from local_monitor.py
 """
 
 import os
@@ -11,14 +12,18 @@ import logging
 import asyncio
 from typing import Optional
 from dotenv import load_dotenv
+from colorama import Fore, Style, init
 
 # Import from kurigram (pyrogram fork)
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
 from config import API_ID, API_HASH, ENABLE_LOGGING, LOG_LEVEL, LOG_FILE, MAX_WORKERS
-from classeviva_api import ClasseVivaAPI
+from classeviva_api import ClasseVivaAPI, log_colored
 from class_detector import detect_classes
+
+# Initialize colorama
+init(autoreset=True)
 
 # Load environment variables
 load_dotenv()
@@ -38,12 +43,12 @@ logger = logging.getLogger(__name__)
 
 # Bot configuration
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-CLASSEVIVA_USERNAME = os.getenv("CLASSEVIVA_USERNAME")
-CLASSEVIVA_PASSWORD = os.getenv("CLASSEVIVA_PASSWORD")
 
 # Validate configuration
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN not set in environment variables")
+
+log_colored("INFO: Bot inizializzato", Fore.CYAN)
 
 # Initialize Pyrogram client
 app = Client(
@@ -113,26 +118,23 @@ async def login_command(client: Client, message: Message):
     """Handle /login command"""
     global classeviva_api
     
-    if not CLASSEVIVA_USERNAME or not CLASSEVIVA_PASSWORD:
-        await message.reply_text(
-            "❌ Credenziali ClasseViva non configurate.\n"
-            "Imposta CLASSEVIVA_USERNAME e CLASSEVIVA_PASSWORD nel file .env"
-        )
-        return
-    
     status_msg = await message.reply_text("🔄 Autenticazione in corso...")
     
     try:
-        classeviva_api = ClasseVivaAPI(CLASSEVIVA_USERNAME, CLASSEVIVA_PASSWORD)
+        # Initialize API with hardcoded credentials
+        classeviva_api = ClasseVivaAPI()
         
         if classeviva_api.login():
             await status_msg.edit_text("✅ Autenticazione riuscita!\nUsa /check per controllare le comunicazioni.")
+            log_colored("TELEGRAM: Messaggio inviato (login riuscito)", Fore.GREEN)
         else:
             await status_msg.edit_text("❌ Autenticazione fallita. Verifica le credenziali.")
+            log_colored("TELEGRAM: Messaggio inviato (login fallito)", Fore.RED)
             classeviva_api = None
     
     except Exception as e:
         logger.error(f"Login error: {e}")
+        log_colored(f"ERRORE: Login command fallito - {str(e)}", Fore.RED)
         await status_msg.edit_text(f"❌ Errore durante l'autenticazione: {str(e)}")
         classeviva_api = None
 
@@ -147,22 +149,25 @@ async def check_command(client: Client, message: Message):
         return
     
     status_msg = await message.reply_text("🔄 Controllo comunicazioni...")
+    log_colored("INFO: Controllo comunicazioni richiesto", Fore.CYAN)
     
     try:
-        # Get unread communications
-        communications = classeviva_api.get_communications(read_status="unread")
+        # Get communications
+        communications = classeviva_api.get_communications()
         
         if not communications:
             await status_msg.edit_text("✅ Nessuna nuova comunicazione.")
+            log_colored("TELEGRAM: Messaggio inviato (nessuna comunicazione)", Fore.GREEN)
             return
         
         await status_msg.edit_text(f"📨 Trovate {len(communications)} nuove comunicazioni!")
+        log_colored(f"TELEGRAM: Messaggio inviato ({len(communications)} comunicazioni)", Fore.GREEN)
         
         # Process each communication
         for comm in communications[:5]:  # Limit to 5 for memory efficiency
-            title = comm.get("evtText", "Nessun titolo")
-            date = comm.get("evtDatetimeBegin", "Data sconosciuta")
-            notes = comm.get("notes", "")
+            title = comm.get("evtText", comm.get("titolo", "Nessun titolo"))
+            date = comm.get("evtDatetimeBegin", comm.get("data", "Data sconosciuta"))
+            notes = comm.get("notes", comm.get("testo", ""))
             
             # Build message
             comm_text = f"📌 **{title}**\n"
@@ -179,10 +184,12 @@ async def check_command(client: Client, message: Message):
                 comm_text += classes_output
             
             await message.reply_text(comm_text)
+            log_colored("TELEGRAM: Messaggio inviato", Fore.GREEN)
             await asyncio.sleep(0.5)  # Small delay to avoid flooding
     
     except Exception as e:
         logger.error(f"Check error: {e}")
+        log_colored(f"ERRORE: Check command fallito - {str(e)}", Fore.RED)
         await status_msg.edit_text(f"❌ Errore durante il controllo: {str(e)}")
 
 
@@ -191,12 +198,13 @@ async def status_command(client: Client, message: Message):
     """Handle /status command"""
     global classeviva_api
     
-    if classeviva_api and classeviva_api.auth_token:
+    if classeviva_api and classeviva_api.phpsessid and classeviva_api.webidentity:
         status = "✅ Connesso a ClasseViva"
     else:
         status = "❌ Non connesso. Usa /login"
     
     await message.reply_text(f"**Status:**\n{status}")
+    log_colored(f"INFO: Status richiesto - {status}", Fore.CYAN)
 
 
 @app.on_message(filters.command("logout"))
@@ -264,6 +272,9 @@ async def periodic_check():
 
 def main():
     """Main entry point"""
+    log_colored("INFO: Avvio ClasseViva Monitor Bot (Raspberry Pi optimized)", Fore.CYAN)
+    log_colored(f"INFO: Utilizzo kurigram da kurimuzonakuma/pyrogram", Fore.CYAN)
+    log_colored(f"INFO: API ID: {API_ID}", Fore.CYAN)
     logger.info("Starting ClasseViva Monitor Bot (Raspberry Pi optimized)")
     logger.info(f"Using kurigram from kurimuzonakuma/pyrogram")
     logger.info(f"API ID: {API_ID}")
