@@ -22,3 +22,6 @@ TgCrypto==1.2.5
 # Console coloring and timezone support
 colorama==0.4.6
 pytz==2024.1
+
+# HTML parsing for attachments
+beautifulsoup4==4.12.3
