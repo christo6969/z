@@ -2,6 +2,36 @@
 
 A Telegram bot for monitoring ClasseViva (Italian school e-register) notifications, optimized for Raspberry Pi.
 
+## Quick Start
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/christo6969/z.git classeviva-monitor
+   cd classeviva-monitor
+   ```
+
+2. **Run the installation script:**
+   ```bash
+   chmod +x install.sh
+   ./install.sh
+   ```
+
+3. **Configure credentials:**
+   ```bash
+   nano .env
+   # Add your BOT_TOKEN, CLASSEVIVA_USERNAME, and CLASSEVIVA_PASSWORD
+   ```
+
+4. **Run the bot:**
+   ```bash
+   source venv/bin/activate
+   python bot.py
+   ```
+
+See detailed instructions below for systemd service setup.
+
+---
+
 ## Features
 
 ✅ **Real-time Monitoring** - Monitor ClasseViva communications and notifications  
