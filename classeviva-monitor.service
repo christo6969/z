@@ -1,0 +1,20 @@
+[Unit]
+Description=ClasseViva Monitor Bot
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/classeviva-monitor
+ExecStart=/home/pi/classeviva-monitor/venv/bin/python /home/pi/classeviva-monitor/bot.py
+Restart=on-failure
+RestartSec=10
+StandardOutput=append:/var/log/classeviva-monitor.log
+StandardError=append:/var/log/classeviva-monitor.log
+
+# Resource limits for Raspberry Pi
+MemoryLimit=256M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

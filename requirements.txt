@@ -1,0 +1,20 @@
+# ClasseViva Monitor Requirements
+# Optimized for Raspberry Pi
+
+# Telegram Bot Framework (custom fork)
+git+https://github.com/kurimuzonakuma/pyrogram.git
+
+# PDF Processing (lightweight)
+PyPDF2==3.0.1
+pdfplumber==0.10.3
+
+# HTTP Requests
+requests==2.31.0
+aiohttp==3.9.4
+
+# Utilities
+python-dotenv==1.0.0
+pillow==10.3.0
+
+# TgCrypto for better performance
+TgCrypto==1.2.5
